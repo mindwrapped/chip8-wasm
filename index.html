@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CHIP-8 Emulator</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: white;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            max-width: 800px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .display-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        canvas {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            background: #000;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+        }
+
+        .controls {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin: 20px 0;
+            max-width: 300px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .key {
+            aspect-ratio: 1;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: all 0.1s;
+            user-select: none;
+        }
+
+        .key:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .key.active {
+            background: rgba(255, 255, 255, 0.6);
+            transform: scale(0.95);
+        }
+
+        .file-input-container {
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        input[type="file"] {
+            display: none;
+        }
+
+        .file-label {
+            display: inline-block;
+            padding: 12px 24px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+
+        .file-label:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .keyboard-hint {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        .status {
+            text-align: center;
+            margin-top: 15px;
+            font-size: 0.9em;
+            min-height: 20px;
+        }
+
+        .key-mapping {
+            margin-top: 20px;
+            font-size: 0.85em;
+            opacity: 0.7;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>CHIP-8 Emulator</h1>
+        
+        <div class="display-container">
+            <canvas id="display" width="64" height="32"></canvas>
+        </div>
+
+        <div class="file-input-container">
+            <label for="rom-input" class="file-label">Load ROM</label>
+            <input type="file" id="rom-input" accept=".ch8,.rom">
+        </div>
+
+        <div class="controls">
+            <div class="key" data-key="1">1</div>
+            <div class="key" data-key="2">2</div>
+            <div class="key" data-key="3">3</div>
+            <div class="key" data-key="C">C</div>
+            <div class="key" data-key="4">4</div>
+            <div class="key" data-key="5">5</div>
+            <div class="key" data-key="6">6</div>
+            <div class="key" data-key="D">D</div>
+            <div class="key" data-key="7">7</div>
+            <div class="key" data-key="8">8</div>
+            <div class="key" data-key="9">9</div>
+            <div class="key" data-key="E">E</div>
+            <div class="key" data-key="A">A</div>
+            <div class="key" data-key="0">0</div>
+            <div class="key" data-key="B">B</div>
+            <div class="key" data-key="F">F</div>
+        </div>
+
+        <div class="keyboard-hint">
+            Use keyboard: 1-9, 0, A-F keys
+        </div>
+
+        <div class="key-mapping">
+            CHIP-8 Keypad: 1-2-3-C | 4-5-6-D | 7-8-9-E | A-0-B-F
+        </div>
+
+        <div class="status" id="status"></div>
+    </div>
+
+    <script src="chip8.js"></script>
+    <script>
+        // Wait for WASM to load
+        Module.onRuntimeInitialized = function() {
+            const canvas = document.getElementById('display');
+            const ctx = canvas.getContext('2d');
+            const scale = 10;
+            canvas.width = 64 * scale;
+            canvas.height = 32 * scale;
+
+            // Initialize CHIP-8
+            Module.ccall('init_chip8', null, [], []);
+            
+            // Keyboard mapping: CHIP-8 keypad to keyboard keys
+            const keyMap = {
+                '1': 0x1, '2': 0x2, '3': 0x3, '4': 0xC,
+                'q': 0x4, 'w': 0x5, 'e': 0x6, 'r': 0xD,
+                'a': 0x7, 's': 0x8, 'd': 0x9, 'f': 0xE,
+                'z': 0xA, 'x': 0x0, 'c': 0xB, 'v': 0xF
+            };
+
+            // Alternative mapping using number row
+            const altKeyMap = {
+                '1': 0x1, '2': 0x2, '3': 0x3, '4': 0xC,
+                '5': 0x4, '6': 0x5, '7': 0x6, '8': 0xD,
+                '9': 0x7, '0': 0x8, '-': 0x9, '=': 0xE,
+                'q': 0xA, 'w': 0x0, 'e': 0xB, 'r': 0xF
+            };
+
+            let pressedKeys = new Set();
+
+            function updateKey(key, pressed) {
+                const chip8Key = keyMap[key.toLowerCase()] ?? altKeyMap[key.toLowerCase()];
+                if (chip8Key !== undefined) {
+                    Module.ccall('set_key', null, ['number', 'boolean'], [chip8Key, pressed]);
+                    updateKeyDisplay(chip8Key, pressed);
+                }
+            }
+
+            function updateKeyDisplay(chip8Key, pressed) {
+                const keyLabels = {
+                    0x1: '1', 0x2: '2', 0x3: '3', 0xC: 'C',
+                    0x4: '4', 0x5: '5', 0x6: '6', 0xD: 'D',
+                    0x7: '7', 0x8: '8', 0x9: '9', 0xE: 'E',
+                    0xA: 'A', 0x0: '0', 0xB: 'B', 0xF: 'F'
+                };
+                const label = keyLabels[chip8Key];
+                if (label) {
+                    const keyElement = document.querySelector(`[data-key="${label}"]`);
+                    if (keyElement) {
+                        keyElement.classList.toggle('active', pressed);
+                    }
+                }
+            }
+
+            // Keyboard events
+            document.addEventListener('keydown', (e) => {
+                if (!pressedKeys.has(e.key)) {
+                    pressedKeys.add(e.key);
+                    updateKey(e.key, true);
+                }
+            });
+
+            document.addEventListener('keyup', (e) => {
+                pressedKeys.delete(e.key);
+                updateKey(e.key, false);
+            });
+
+            // Mouse/touch events for on-screen keypad
+            document.querySelectorAll('.key').forEach(key => {
+                const chip8KeyMap = {
+                    '1': 0x1, '2': 0x2, '3': 0x3, 'C': 0xC,
+                    '4': 0x4, '5': 0x5, '6': 0x6, 'D': 0xD,
+                    '7': 0x7, '8': 0x8, '9': 0x9, 'E': 0xE,
+                    'A': 0xA, '0': 0x0, 'B': 0xB, 'F': 0xF
+                };
+                const keyValue = chip8KeyMap[key.dataset.key];
+                
+                key.addEventListener('mousedown', () => {
+                    Module.ccall('set_key', null, ['number', 'boolean'], [keyValue, true]);
+                    key.classList.add('active');
+                });
+                
+                key.addEventListener('mouseup', () => {
+                    Module.ccall('set_key', null, ['number', 'boolean'], [keyValue, false]);
+                    key.classList.remove('active');
+                });
+                
+                key.addEventListener('mouseleave', () => {
+                    Module.ccall('set_key', null, ['number', 'boolean'], [keyValue, false]);
+                    key.classList.remove('active');
+                });
+            });
+
+            // ROM loading
+            document.getElementById('rom-input').addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                        try {
+                            const arrayBuffer = event.target.result;
+                            const uint8Array = new Uint8Array(arrayBuffer);
+                            
+                            // Allocate memory in WASM
+                            const romPtr = Module._malloc(uint8Array.length);
+                            if (!romPtr) {
+                                document.getElementById('status').textContent = 'Failed to allocate memory';
+                                return;
+                            }
+                            
+                            // Copy ROM data to WASM memory
+                            // Use writeArrayToMemory (cleanest method, exported in Makefile)
+                            if (Module.writeArrayToMemory) {
+                                Module.writeArrayToMemory(uint8Array, romPtr);
+                            }
+                            // Fallback: try HEAPU8
+                            else if (Module.HEAPU8) {
+                                Module.HEAPU8.set(uint8Array, romPtr);
+                            }
+                            // Fallback: use HEAPU32.buffer (same as display code)
+                            else if (Module.HEAPU32 && Module.HEAPU32.buffer) {
+                                const heapView = new Uint8Array(Module.HEAPU32.buffer, romPtr, uint8Array.length);
+                                heapView.set(uint8Array);
+                            }
+                            else {
+                                throw new Error('Cannot access WASM memory. Module properties: ' + Object.keys(Module).filter(k => k.includes('HEAP') || k === 'buffer').join(', '));
+                            }
+                            
+                            // Load ROM
+                            const success = Module.ccall('load_rom', 'boolean', ['number', 'number'], [romPtr, uint8Array.length]);
+                            
+                            // Free memory
+                            Module._free(romPtr);
+                            
+                            if (success) {
+                                document.getElementById('status').textContent = `Loaded: ${file.name}`;
+                            } else {
+                                document.getElementById('status').textContent = 'Failed to load ROM';
+                            }
+                        } catch (error) {
+                            document.getElementById('status').textContent = `Error: ${error.message}`;
+                            console.error('ROM loading error:', error);
+                        }
+                    };
+                    reader.readAsArrayBuffer(file);
+                }
+            });
+
+            // Main emulation loop
+            let lastTime = performance.now();
+            const targetFPS = 60;
+            const frameTime = 1000 / targetFPS;
+            const cyclesPerFrame = 10; // Run 10 instructions per frame
+
+            function gameLoop(currentTime) {
+                const deltaTime = currentTime - lastTime;
+                
+                if (deltaTime >= frameTime) {
+                    // Update timers at 60Hz
+                    Module.ccall('update_timers', null, [], []);
+                    
+                    // Run multiple cycles per frame
+                    for (let i = 0; i < cyclesPerFrame; i++) {
+                        Module.ccall('run_cycle', null, [], []);
+                    }
+                    
+                    // Check if display needs updating
+                    const needsDraw = Module.ccall('get_draw_flag', 'boolean', [], []);
+                    if (needsDraw) {
+                        const imageData = ctx.createImageData(64, 32);
+                        
+                        // Read pixels one by one (not the fastest, but works without heap access)
+                        for (let y = 0; y < 32; y++) {
+                            for (let x = 0; x < 64; x++) {
+                                const pixel = Module.ccall('get_pixel', 'number', ['number', 'number'], [x, y]);
+                                const idx = (y * 64 + x) * 4;
+                                imageData.data[idx] = (pixel >> 16) & 0xFF;     // R
+                                imageData.data[idx + 1] = (pixel >> 8) & 0xFF;  // G
+                                imageData.data[idx + 2] = pixel & 0xFF;         // B
+                                imageData.data[idx + 3] = 255;                   // A
+                            }
+                        }
+                        
+                        ctx.putImageData(imageData, 0, 0);
+                        ctx.imageSmoothingEnabled = false;
+                        ctx.drawImage(canvas, 0, 0, 64, 32, 0, 0, 64 * scale, 32 * scale);
+                    }
+                    
+                    lastTime = currentTime - (deltaTime % frameTime);
+                }
+                
+                requestAnimationFrame(gameLoop);
+            }
+
+            requestAnimationFrame(gameLoop);
+            document.getElementById('status').textContent = 'Ready - Load a ROM to start';
+        };
+    </script>
+</body>
+</html>

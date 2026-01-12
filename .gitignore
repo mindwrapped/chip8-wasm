@@ -1,0 +1,20 @@
+# Build artifacts
+*.js
+*.wasm
+*.js.map
+*.wasm.map
+
+# Emscripten
+*.o
+*.bc
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS files
+.DS_Store
+Thumbs.db
