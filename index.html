@@ -5,6 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CHIP-8 Emulator</title>
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&display=swap');
+        
         * {
             margin: 0;
             padding: 0;
@@ -12,82 +14,213 @@
         }
 
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Share Tech Mono', 'Courier New', monospace;
+            background: #0a0a0a;
+            background-image: 
+                radial-gradient(circle at 20% 50%, #1a1a2e 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, #16213e 0%, transparent 50%),
+                linear-gradient(180deg, #0a0a0a 0%, #1a1a1a 100%);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             padding: 20px;
-            color: white;
+            color: #00ff41;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* CRT scanline effect */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: repeating-linear-gradient(
+                0deg,
+                rgba(0, 0, 0, 0.15),
+                rgba(0, 0, 0, 0.15) 1px,
+                transparent 1px,
+                transparent 2px
+            );
+            pointer-events: none;
+            z-index: 1000;
+            animation: scanline 8s linear infinite;
+        }
+
+        @keyframes scanline {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(4px); }
+        }
+
+        /* Subtle screen flicker */
+        @keyframes flicker {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.98; }
         }
 
         .container {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 30px;
-            box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
-            border: 1px solid rgba(255, 255, 255, 0.18);
-            max-width: 800px;
+            background: #1a1a1a;
+            border: 3px solid #333;
+            border-top: 4px solid #444;
+            border-bottom: 4px solid #222;
+            box-shadow: 
+                0 0 20px rgba(0, 255, 65, 0.1),
+                inset 0 0 30px rgba(0, 0, 0, 0.5),
+                0 10px 50px rgba(0, 0, 0, 0.8);
+            padding: 25px;
+            max-width: 900px;
             width: 100%;
+            position: relative;
+            animation: flicker 0.15s infinite;
+        }
+
+        .container::before {
+            content: '';
+            position: absolute;
+            top: -2px;
+            left: -2px;
+            right: -2px;
+            bottom: -2px;
+            background: linear-gradient(45deg, #00ff41, #00cc33, #00ff41);
+            opacity: 0.1;
+            z-index: -1;
+            filter: blur(10px);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #00ff41;
+            padding-bottom: 15px;
+            position: relative;
         }
 
         h1 {
-            text-align: center;
-            margin-bottom: 20px;
-            font-size: 2.5em;
-            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+            font-family: 'Orbitron', monospace;
+            font-size: 2.2em;
+            font-weight: 900;
+            color: #00ff41;
+            text-shadow: 
+                0 0 10px #00ff41,
+                0 0 20px #00ff41,
+                0 0 30px #00ff41,
+                2px 2px 0px #003311;
+            letter-spacing: 3px;
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            font-size: 0.7em;
+            color: #00cc33;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .display-wrapper {
+            background: #000;
+            border: 8px solid #2a2a2a;
+            border-top: 10px solid #333;
+            border-bottom: 10px solid #1a1a1a;
+            padding: 15px;
+            margin: 20px auto;
+            box-shadow: 
+                inset 0 0 30px rgba(0, 0, 0, 0.8),
+                0 0 20px rgba(0, 255, 65, 0.2);
+            position: relative;
+            max-width: 680px;
+        }
+
+        .display-wrapper::before {
+            content: 'CHIP-8';
+            position: absolute;
+            top: 5px;
+            left: 15px;
+            font-size: 0.6em;
+            color: #00ff41;
+            opacity: 0.3;
+            letter-spacing: 2px;
         }
 
         .display-container {
             display: flex;
             flex-direction: column;
             align-items: center;
-            margin-bottom: 20px;
+            position: relative;
         }
 
         canvas {
-            border: 4px solid rgba(255, 255, 255, 0.3);
-            border-radius: 10px;
+            border: 2px solid #00ff41;
             background: #000;
             image-rendering: pixelated;
             image-rendering: crisp-edges;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+            box-shadow: 
+                0 0 20px rgba(0, 255, 65, 0.3),
+                inset 0 0 10px rgba(0, 255, 65, 0.1);
+            display: block;
+        }
+
+        .controls-section {
+            margin: 25px 0;
+        }
+
+        .section-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 0.9em;
+            color: #00ff41;
+            text-align: center;
+            margin-bottom: 15px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            text-shadow: 0 0 5px #00ff41;
         }
 
         .controls {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-            margin: 20px 0;
-            max-width: 300px;
-            margin-left: auto;
-            margin-right: auto;
+            gap: 8px;
+            margin: 15px auto;
+            max-width: 320px;
         }
 
         .key {
             aspect-ratio: 1;
-            background: rgba(255, 255, 255, 0.2);
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 8px;
+            background: #1a1a1a;
+            border: 2px solid #333;
+            border-top: 2px solid #444;
+            border-bottom: 2px solid #222;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: bold;
-            font-size: 1.2em;
+            font-size: 1.1em;
             cursor: pointer;
             transition: all 0.1s;
             user-select: none;
+            color: #00ff41;
+            text-shadow: 0 0 5px #00ff41;
+            font-family: 'Orbitron', monospace;
+            box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.5);
         }
 
         .key:hover {
-            background: rgba(255, 255, 255, 0.3);
+            background: #222;
+            border-color: #00ff41;
+            box-shadow: 
+                0 0 10px rgba(0, 255, 65, 0.5),
+                inset 0 2px 5px rgba(0, 0, 0, 0.5);
         }
 
         .key.active {
-            background: rgba(255, 255, 255, 0.6);
+            background: #003311;
+            border-color: #00ff41;
+            color: #00ff88;
+            box-shadow: 
+                0 0 15px rgba(0, 255, 65, 0.8),
+                inset 0 0 10px rgba(0, 255, 65, 0.3);
             transform: scale(0.95);
         }
 
@@ -102,25 +235,44 @@
 
         .file-label {
             display: inline-block;
-            padding: 12px 24px;
-            background: rgba(255, 255, 255, 0.2);
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            border-radius: 8px;
+            padding: 12px 30px;
+            background: #1a1a1a;
+            border: 2px solid #00ff41;
+            color: #00ff41;
             cursor: pointer;
-            transition: all 0.3s;
+            transition: all 0.2s;
             font-weight: bold;
+            font-family: 'Orbitron', monospace;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            text-shadow: 0 0 5px #00ff41;
+            box-shadow: 
+                0 0 10px rgba(0, 255, 65, 0.3),
+                inset 0 2px 5px rgba(0, 0, 0, 0.5);
         }
 
         .file-label:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: translateY(-2px);
+            background: #003311;
+            box-shadow: 
+                0 0 15px rgba(0, 255, 65, 0.6),
+                inset 0 2px 5px rgba(0, 0, 0, 0.5);
+            transform: translateY(-1px);
+        }
+
+        .info-panel {
+            margin-top: 20px;
+            padding: 15px;
+            background: #0a0a0a;
+            border: 1px solid #333;
+            border-left: 3px solid #00ff41;
         }
 
         .keyboard-hint {
             text-align: center;
-            margin-top: 20px;
-            font-size: 0.9em;
-            opacity: 0.8;
+            margin: 10px 0;
+            font-size: 0.85em;
+            color: #00cc33;
+            letter-spacing: 1px;
         }
 
         .status {
@@ -128,57 +280,100 @@
             margin-top: 15px;
             font-size: 0.9em;
             min-height: 20px;
+            color: #00ff41;
+            font-family: 'Share Tech Mono', monospace;
+            text-shadow: 0 0 5px #00ff41;
         }
 
         .key-mapping {
-            margin-top: 20px;
-            font-size: 0.85em;
-            opacity: 0.7;
+            margin-top: 15px;
+            font-size: 0.75em;
+            color: #666;
             text-align: center;
+            letter-spacing: 1px;
+            font-family: 'Share Tech Mono', monospace;
+        }
+
+        .status::before {
+            content: '> ';
+            color: #00ff41;
+        }
+
+        /* Terminal-style blinking cursor for status */
+        .status.active::after {
+            content: '_';
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+
+        /* Retro corner decorations */
+        .container::after {
+            content: '';
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 20px;
+            height: 20px;
+            border-top: 2px solid #00ff41;
+            border-right: 2px solid #00ff41;
+            opacity: 0.3;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>CHIP-8 Emulator</h1>
+        <div class="header">
+            <h1>CHIP-8 EMULATOR</h1>
+            <div class="subtitle">WebAssembly Implementation</div>
+        </div>
         
-        <div class="display-container">
-            <canvas id="display" width="64" height="32"></canvas>
+        <div class="display-wrapper">
+            <div class="display-container">
+                <canvas id="display" width="64" height="32"></canvas>
+            </div>
         </div>
 
         <div class="file-input-container">
-            <label for="rom-input" class="file-label">Load ROM</label>
+            <label for="rom-input" class="file-label">▶ LOAD ROM</label>
             <input type="file" id="rom-input" accept=".ch8,.rom">
         </div>
 
-        <div class="controls">
-            <div class="key" data-key="1">1</div>
-            <div class="key" data-key="2">2</div>
-            <div class="key" data-key="3">3</div>
-            <div class="key" data-key="C">C</div>
-            <div class="key" data-key="4">4</div>
-            <div class="key" data-key="5">5</div>
-            <div class="key" data-key="6">6</div>
-            <div class="key" data-key="D">D</div>
-            <div class="key" data-key="7">7</div>
-            <div class="key" data-key="8">8</div>
-            <div class="key" data-key="9">9</div>
-            <div class="key" data-key="E">E</div>
-            <div class="key" data-key="A">A</div>
-            <div class="key" data-key="0">0</div>
-            <div class="key" data-key="B">B</div>
-            <div class="key" data-key="F">F</div>
+        <div class="controls-section">
+            <div class="section-title">Keypad</div>
+            <div class="controls">
+                <div class="key" data-key="1">1</div>
+                <div class="key" data-key="2">2</div>
+                <div class="key" data-key="3">3</div>
+                <div class="key" data-key="C">C</div>
+                <div class="key" data-key="4">4</div>
+                <div class="key" data-key="5">5</div>
+                <div class="key" data-key="6">6</div>
+                <div class="key" data-key="D">D</div>
+                <div class="key" data-key="7">7</div>
+                <div class="key" data-key="8">8</div>
+                <div class="key" data-key="9">9</div>
+                <div class="key" data-key="E">E</div>
+                <div class="key" data-key="A">A</div>
+                <div class="key" data-key="0">0</div>
+                <div class="key" data-key="B">B</div>
+                <div class="key" data-key="F">F</div>
+            </div>
         </div>
 
-        <div class="keyboard-hint">
-            Use keyboard: 1-9, 0, A-F keys
+        <div class="info-panel">
+            <div class="keyboard-hint">
+                KEYBOARD: 1-9, 0, A-F KEYS
+            </div>
+            <div class="key-mapping">
+                MAPPING: 1-2-3-C | 4-5-6-D | 7-8-9-E | A-0-B-F
+            </div>
         </div>
 
-        <div class="key-mapping">
-            CHIP-8 Keypad: 1-2-3-C | 4-5-6-D | 7-8-9-E | A-0-B-F
-        </div>
-
-        <div class="status" id="status"></div>
+        <div class="status active" id="status"></div>
     </div>
 
     <script src="chip8.js"></script>
@@ -288,7 +483,9 @@
                             // Allocate memory in WASM
                             const romPtr = Module._malloc(uint8Array.length);
                             if (!romPtr) {
-                                document.getElementById('status').textContent = 'Failed to allocate memory';
+                                const statusEl = document.getElementById('status');
+                                statusEl.textContent = 'ERROR: FAILED TO ALLOCATE MEMORY';
+                                statusEl.classList.add('active');
                                 return;
                             }
                             
@@ -316,13 +513,18 @@
                             // Free memory
                             Module._free(romPtr);
                             
+                            const statusEl = document.getElementById('status');
                             if (success) {
-                                document.getElementById('status').textContent = `Loaded: ${file.name}`;
+                                statusEl.textContent = `LOADED: ${file.name.toUpperCase()}`;
+                                statusEl.classList.add('active');
                             } else {
-                                document.getElementById('status').textContent = 'Failed to load ROM';
+                                statusEl.textContent = 'ERROR: FAILED TO LOAD ROM';
+                                statusEl.classList.add('active');
                             }
                         } catch (error) {
-                            document.getElementById('status').textContent = `Error: ${error.message}`;
+                            const statusEl = document.getElementById('status');
+                            statusEl.textContent = `ERROR: ${error.message.toUpperCase()}`;
+                            statusEl.classList.add('active');
                             console.error('ROM loading error:', error);
                         }
                     };
@@ -377,7 +579,9 @@
             }
 
             requestAnimationFrame(gameLoop);
-            document.getElementById('status').textContent = 'Ready - Load a ROM to start';
+            const statusEl = document.getElementById('status');
+            statusEl.textContent = 'READY - LOAD A ROM TO START';
+            statusEl.classList.add('active');
         };
     </script>
 </body>
