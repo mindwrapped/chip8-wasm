@@ -2,6 +2,8 @@
 
 A CHIP-8 emulator written in C and compiled to WebAssembly, running in your browser.
 
+![CHIP-8 Emulator](images/im1.png)
+
 ## Features
 
 - Full CHIP-8 instruction set implementation
@@ -47,7 +49,7 @@ Then open `http://localhost:8000` in your browser.
 3. Push to your repository
 4. Enable GitHub Pages in your repository settings (Settings → Pages)
 5. Select the branch containing your files (usually `main` or `master`)
-6. Your emulator will be available at `https://<username>.github.io/chip8-wasm/`
+6. Your emulator will be available at `https://mindwrapped.github.io/chip8-wasm/`
 
 ## CHIP-8 Keypad Mapping
 
