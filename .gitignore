@@ -8,6 +8,9 @@
 *.o
 *.bc
 
+# Deployment directory
+deploy/
+
 # Editor files
 .vscode/
 .idea/
