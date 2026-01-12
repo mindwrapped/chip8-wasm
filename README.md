@@ -78,6 +78,8 @@ You can find CHIP-8 ROMs online. Some popular ones include:
 
 Load ROMs using the "Load ROM" button in the interface.
 
+Here is a link to some game roms to try: https://github.com/kripod/chip8-roms/tree/master/games . 
+
 ## Technical Details
 
 - **Language**: C
