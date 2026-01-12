@@ -1,5 +1,4 @@
 # Build artifacts
-*.js
 *.wasm
 *.js.map
 *.wasm.map
