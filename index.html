@@ -378,8 +378,26 @@
 
     <script src="chip8.js"></script>
     <script>
-        // Wait for WASM to load
-        Module.onRuntimeInitialized = function() {
+        // Wait for Module to be available and WASM to load
+        function initEmulator() {
+            if (typeof Module === 'undefined') {
+                // Module not loaded yet, wait a bit and try again
+                setTimeout(initEmulator, 100);
+                return;
+            }
+            
+            // Set up the runtime initialized callback
+            Module.onRuntimeInitialized = function() {
+                startEmulator();
+            };
+            
+            // If already initialized, start immediately
+            if (Module.calledRun) {
+                startEmulator();
+            }
+        }
+        
+        function startEmulator() {
             const canvas = document.getElementById('display');
             const ctx = canvas.getContext('2d');
             const scale = 10;
@@ -582,7 +600,14 @@
             const statusEl = document.getElementById('status');
             statusEl.textContent = 'READY - LOAD A ROM TO START';
             statusEl.classList.add('active');
-        };
+        }
+        
+        // Start initialization when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initEmulator);
+        } else {
+            initEmulator();
+        }
     </script>
 </body>
 </html>
